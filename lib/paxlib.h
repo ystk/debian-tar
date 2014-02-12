@@ -21,7 +21,6 @@
 #ifndef _paxlib_h_
 #define _paxlib_h_
 
-#include <hash.h>
 #include <inttostr.h>
 
 /* Error reporting functions and definitions */
@@ -88,7 +87,7 @@ void seek_error (char const *);
 void seek_error_details (char const *, off_t);
 void seek_warn (char const *);
 void seek_warn_details (char const *, off_t);
-void stat_fatal (char const *);
+void stat_fatal (char const *) __attribute__ ((noreturn));
 void stat_error (char const *);
 void stat_warn (char const *);
 void symlink_error (char const *, char const *);
@@ -98,17 +97,15 @@ void unlink_error (char const *);
 void utime_error (char const *);
 void waitpid_error (char const *);
 void write_error (char const *);
+void write_error_details (char const *, size_t, size_t);
 
-void pax_exit (void);
+void pax_exit (void) __attribute__ ((noreturn));
 void fatal_exit (void) __attribute__ ((noreturn));
 
 #define STRINGIFY_BIGINT(i, b) umaxtostr (i, b)
 
 
 /* Name-related functions */
-bool hash_string_insert (Hash_table **table, char const *string);
-bool hash_string_lookup (Hash_table const *table, char const *string);
-
 bool removed_prefixes_p (void);
 char *safer_name_suffix (char const *file_name, bool link_target, bool absolute_names);
 

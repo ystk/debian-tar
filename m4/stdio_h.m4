@@ -1,5 +1,5 @@
-# stdio_h.m4 serial 26
-dnl Copyright (C) 2007-2010 Free Software Foundation, Inc.
+# stdio_h.m4 serial 33
+dnl Copyright (C) 2007-2011 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -8,7 +8,7 @@ AC_DEFUN([gl_STDIO_H],
 [
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
   AC_REQUIRE([AC_C_INLINE])
-  gl_CHECK_NEXT_HEADERS([stdio.h])
+  gl_NEXT_HEADERS([stdio.h])
   dnl No need to create extra modules for these functions. Everyone who uses
   dnl <stdio.h> likely needs them.
   GNULIB_FPRINTF=1
@@ -37,16 +37,16 @@ AC_DEFUN([gl_STDIO_H],
   dnl guaranteed by C89.
   gl_WARN_ON_USE_PREPARE([[#include <stdio.h>
     ]], [dprintf fpurge fseeko ftello getdelim getline popen renameat
-    snprintf vdprintf vsnprintf])
+    snprintf tmpfile vdprintf vsnprintf])
 ])
 
 AC_DEFUN([gl_STDIO_MODULE_INDICATOR],
 [
   dnl Use AC_REQUIRE here, so that the default settings are expanded once only.
   AC_REQUIRE([gl_STDIO_H_DEFAULTS])
-  GNULIB_[]m4_translit([$1],[abcdefghijklmnopqrstuvwxyz./-],[ABCDEFGHIJKLMNOPQRSTUVWXYZ___])=1
+  gl_MODULE_INDICATOR_SET_VARIABLE([$1])
   dnl Define it also as a C macro, for the benefit of the unit tests.
-  gl_MODULE_INDICATOR([$1])
+  gl_MODULE_INDICATOR_FOR_TESTS([$1])
 ])
 
 AC_DEFUN([gl_STDIO_H_DEFAULTS],
@@ -83,6 +83,7 @@ AC_DEFUN([gl_STDIO_H_DEFAULTS],
   GNULIB_SNPRINTF=0;             AC_SUBST([GNULIB_SNPRINTF])
   GNULIB_SPRINTF_POSIX=0;        AC_SUBST([GNULIB_SPRINTF_POSIX])
   GNULIB_STDIO_H_SIGPIPE=0;      AC_SUBST([GNULIB_STDIO_H_SIGPIPE])
+  GNULIB_TMPFILE=0;              AC_SUBST([GNULIB_TMPFILE])
   GNULIB_VASPRINTF=0;            AC_SUBST([GNULIB_VASPRINTF])
   GNULIB_VDPRINTF=0;             AC_SUBST([GNULIB_VDPRINTF])
   GNULIB_VFPRINTF=0;             AC_SUBST([GNULIB_VFPRINTF])
@@ -93,12 +94,16 @@ AC_DEFUN([gl_STDIO_H_DEFAULTS],
   GNULIB_VSPRINTF_POSIX=0;       AC_SUBST([GNULIB_VSPRINTF_POSIX])
   dnl Assume proper GNU behavior unless another module says otherwise.
   HAVE_DECL_FPURGE=1;            AC_SUBST([HAVE_DECL_FPURGE])
+  HAVE_DECL_FSEEKO=1;            AC_SUBST([HAVE_DECL_FSEEKO])
+  HAVE_DECL_FTELLO=1;            AC_SUBST([HAVE_DECL_FTELLO])
   HAVE_DECL_GETDELIM=1;          AC_SUBST([HAVE_DECL_GETDELIM])
   HAVE_DECL_GETLINE=1;           AC_SUBST([HAVE_DECL_GETLINE])
   HAVE_DECL_OBSTACK_PRINTF=1;    AC_SUBST([HAVE_DECL_OBSTACK_PRINTF])
   HAVE_DECL_SNPRINTF=1;          AC_SUBST([HAVE_DECL_SNPRINTF])
   HAVE_DECL_VSNPRINTF=1;         AC_SUBST([HAVE_DECL_VSNPRINTF])
   HAVE_DPRINTF=1;                AC_SUBST([HAVE_DPRINTF])
+  HAVE_FSEEKO=1;                 AC_SUBST([HAVE_FSEEKO])
+  HAVE_FTELLO=1;                 AC_SUBST([HAVE_FTELLO])
   HAVE_RENAMEAT=1;               AC_SUBST([HAVE_RENAMEAT])
   HAVE_VASPRINTF=1;              AC_SUBST([HAVE_VASPRINTF])
   HAVE_VDPRINTF=1;               AC_SUBST([HAVE_VDPRINTF])
@@ -125,30 +130,11 @@ AC_DEFUN([gl_STDIO_H_DEFAULTS],
   REPLACE_SNPRINTF=0;            AC_SUBST([REPLACE_SNPRINTF])
   REPLACE_SPRINTF=0;             AC_SUBST([REPLACE_SPRINTF])
   REPLACE_STDIO_WRITE_FUNCS=0;   AC_SUBST([REPLACE_STDIO_WRITE_FUNCS])
+  REPLACE_TMPFILE=0;             AC_SUBST([REPLACE_TMPFILE])
   REPLACE_VASPRINTF=0;           AC_SUBST([REPLACE_VASPRINTF])
   REPLACE_VDPRINTF=0;            AC_SUBST([REPLACE_VDPRINTF])
   REPLACE_VFPRINTF=0;            AC_SUBST([REPLACE_VFPRINTF])
   REPLACE_VPRINTF=0;             AC_SUBST([REPLACE_VPRINTF])
   REPLACE_VSNPRINTF=0;           AC_SUBST([REPLACE_VSNPRINTF])
   REPLACE_VSPRINTF=0;            AC_SUBST([REPLACE_VSPRINTF])
-])
-
-dnl Code shared by fseeko and ftello.  Determine if large files are supported,
-dnl but stdin does not start as a large file by default.
-AC_DEFUN([gl_STDIN_LARGE_OFFSET],
-  [
-    AC_CACHE_CHECK([whether stdin defaults to large file offsets],
-      [gl_cv_var_stdin_large_offset],
-      [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
-[[#if defined __SL64 && defined __SCLE /* cygwin */
-  /* Cygwin 1.5.24 and earlier fail to put stdin in 64-bit mode, making
-     fseeko/ftello needlessly fail.  This bug was fixed in 1.5.25, and
-     it is easier to do a version check than building a runtime test.  */
-# include <cygwin/version.h>
-# if CYGWIN_VERSION_DLL_COMBINED < CYGWIN_VERSION_DLL_MAKE_COMBINED (1005, 25)
-  choke me
-# endif
-#endif]])],
-        [gl_cv_var_stdin_large_offset=yes],
-        [gl_cv_var_stdin_large_offset=no])])
 ])

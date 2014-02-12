@@ -1,7 +1,7 @@
 /* -*- buffer-read-only: t -*- vi: set ro: */
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* obstack.h - object stack macros
-   Copyright (C) 1988-1994, 1996-1999, 2003-2006, 2009-2010 Free Software
+   Copyright (C) 1988-1994, 1996-1999, 2003-2006, 2009-2011 Free Software
    Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -105,10 +105,6 @@ Summary:
 
 #ifndef _OBSTACK_H
 #define _OBSTACK_H 1
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* We need the type of a pointer subtraction.  If __PTRDIFF_TYPE__ is
    defined, as with GNU C, use that; that way we don't pollute the
@@ -140,6 +136,10 @@ extern "C" {
                 P, A)
 
 #include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _obstack_chunk           /* Lives at front of each chunk. */
 {

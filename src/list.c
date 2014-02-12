@@ -35,6 +35,20 @@ size_t recent_long_name_blocks;	/* number of blocks in recent_long_name */
 size_t recent_long_link_blocks;	/* likewise, for long link */
 union block *recent_global_header; /* Recent global header block */
 
+#define GID_FROM_HEADER(where) gid_from_header (where, sizeof (where))
+#define MAJOR_FROM_HEADER(where) major_from_header (where, sizeof (where))
+#define MINOR_FROM_HEADER(where) minor_from_header (where, sizeof (where))
+#define MODE_FROM_HEADER(where, hbits) \
+  mode_from_header (where, sizeof (where), hbits)
+#define TIME_FROM_HEADER(where) time_from_header (where, sizeof (where))
+#define UID_FROM_HEADER(where) uid_from_header (where, sizeof (where))
+
+static gid_t gid_from_header (const char *buf, size_t size);
+static major_t major_from_header (const char *buf, size_t size);
+static minor_t minor_from_header (const char *buf, size_t size);
+static mode_t mode_from_header (const char *buf, size_t size, unsigned *hbits);
+static time_t time_from_header (const char *buf, size_t size);
+static uid_t uid_from_header (const char *buf, size_t size);
 static uintmax_t from_header (const char *, size_t, const char *,
 			      uintmax_t, uintmax_t, bool, bool);
 
@@ -61,6 +75,66 @@ base64_init (void)
     base64_map[(int) base_64_digits[i]] = i;
 }
 
+static char *
+decode_xform (char *file_name, void *data)
+{
+  int type = *(int*)data;
+
+  switch (type)
+    {
+    case XFORM_SYMLINK:
+      /* FIXME: It is not quite clear how and to which extent are the symbolic
+	 links subject to filename transformation.  In the absence of another
+	 solution, symbolic links are exempt from component stripping and
+	 name suffix normalization, but subject to filename transformation
+	 proper. */
+      return file_name;
+
+    case XFORM_LINK:
+      file_name = safer_name_suffix (file_name, true, absolute_names_option);
+      break;
+
+    case XFORM_REGFILE:
+      file_name = safer_name_suffix (file_name, false, absolute_names_option);
+      break;
+    }
+
+  if (strip_name_components)
+    {
+      size_t prefix_len = stripped_prefix_len (file_name,
+					       strip_name_components);
+      if (prefix_len == (size_t) -1)
+	prefix_len = strlen (file_name);
+      file_name += prefix_len;
+    }
+  return file_name;
+}
+
+static bool
+transform_member_name (char **pinput, int type)
+{
+  return transform_name_fp (pinput, type, decode_xform, &type);
+}
+
+void
+transform_stat_info (int typeflag, struct tar_stat_info *stat_info)
+{
+  if (typeflag == GNUTYPE_VOLHDR)
+    /* Name transformations don't apply to volume headers. */
+    return;
+
+  transform_member_name (&stat_info->file_name, XFORM_REGFILE);
+  switch (typeflag)
+    {
+    case SYMTYPE:
+      transform_member_name (&stat_info->link_name, XFORM_SYMLINK);
+      break;
+
+    case LNKTYPE:
+      transform_member_name (&stat_info->link_name, XFORM_LINK);
+    }
+}
+
 /* Main loop for reading an archive.  */
 void
 read_and (void (*do_something) (void))
@@ -78,7 +152,7 @@ read_and (void (*do_something) (void))
       prev_status = status;
       tar_stat_destroy (&current_stat_info);
 
-      status = read_header (&current_header, &current_stat_info, 
+      status = read_header (&current_header, &current_stat_info,
                             read_header_auto);
       switch (status)
 	{
@@ -90,7 +164,8 @@ read_and (void (*do_something) (void))
 
 	  /* Valid header.  We should decode next field (mode) first.
 	     Ensure incoming names are null terminated.  */
-
+	  decode_header (current_header, &current_stat_info,
+			 &current_format, 1);
 	  if (! name_match (current_stat_info.file_name)
 	      || (NEWER_OPTION_INITIALIZED (newer_mtime_option)
 		  /* FIXME: We get mtime now, and again later; this causes
@@ -116,13 +191,12 @@ read_and (void (*do_something) (void))
 			   quotearg_colon (current_stat_info.file_name)));
 		  /* Fall through.  */
 		default:
-		  decode_header (current_header,
-				 &current_stat_info, &current_format, 0);
 		  skip_member ();
 		  continue;
 		}
 	    }
-
+	  transform_stat_info (current_header->header.typeflag,
+			       &current_stat_info);
 	  (*do_something) ();
 	  continue;
 
@@ -140,21 +214,13 @@ read_and (void (*do_something) (void))
 	    {
 	      char buf[UINTMAX_STRSIZE_BOUND];
 
-	      status = read_header (&current_header, &current_stat_info, 
+	      status = read_header (&current_header, &current_stat_info,
 	                            read_header_auto);
 	      if (status == HEADER_ZERO_BLOCK)
 		break;
-	      /* 
-	       * According to POSIX tar specs, this is wrong, but on the web
-	       * there are some tar specs that can trigger this, and some tar
-	       * implementations create tars according to that spec.  For now,
-	       * let's not be pedantic about issuing the warning.
-	       */
-#if 0	       
 	      WARNOPT (WARN_ALONE_ZERO_BLOCK,
 		       (0, 0, _("A lone zero block at %s"),
 			STRINGIFY_BIGINT (current_block_ordinal (), buf)));
-#endif
 	      break;
 	    }
 	  status = prev_status;
@@ -218,8 +284,6 @@ list_archive (void)
   off_t block_ordinal = current_block_ordinal ();
 
   /* Print the header block.  */
-  
-  decode_header (current_header, &current_stat_info, &current_format, 0);
   if (verbose_option)
     print_header (&current_stat_info, current_header, block_ordinal);
 
@@ -369,15 +433,13 @@ read_header (union block **return_block, struct tar_stat_info *info,
 
 	      if (header->header.typeflag == GNUTYPE_LONGNAME)
 		{
-		  if (next_long_name)
-		    free (next_long_name);
+		  free (next_long_name);
 		  next_long_name = header_copy;
 		  next_long_name_blocks = size / BLOCKSIZE;
 		}
 	      else
 		{
-		  if (next_long_link)
-		    free (next_long_link);
+		  free (next_long_link);
 		  next_long_link = header_copy;
 		  next_long_link_blocks = size / BLOCKSIZE;
 		}
@@ -436,8 +498,7 @@ read_header (union block **return_block, struct tar_stat_info *info,
 	  struct posix_header const *h = &header->header;
 	  char namebuf[sizeof h->prefix + 1 + NAME_FIELD_SIZE + 1];
 
-	  if (recent_long_name)
-	    free (recent_long_name);
+	  free (recent_long_name);
 
 	  if (next_long_name)
 	    {
@@ -468,8 +529,7 @@ read_header (union block **return_block, struct tar_stat_info *info,
 	  assign_string (&info->file_name, name);
 	  info->had_trailing_slash = strip_trailing_slashes (info->file_name);
 
-	  if (recent_long_link)
-	    free (recent_long_link);
+	  free (recent_long_link);
 
 	  if (next_long_link)
 	    {
@@ -490,47 +550,6 @@ read_header (union block **return_block, struct tar_stat_info *info,
 	  return HEADER_SUCCESS;
 	}
     }
-}
-
-static char *
-decode_xform (char *file_name, void *data)
-{
-  int type = *(int*)data;
-
-  switch (type)
-    {
-    case XFORM_SYMLINK:
-      /* FIXME: It is not quite clear how and to which extent are the symbolic
-	 links subject to filename transformation.  In the absence of another
-	 solution, symbolic links are exempt from component stripping and
-	 name suffix normalization, but subject to filename transformation
-	 proper. */ 
-      return file_name;
-      
-    case XFORM_LINK:
-      file_name = safer_name_suffix (file_name, true, absolute_names_option);
-      break;
-      
-    case XFORM_REGFILE:
-      file_name = safer_name_suffix (file_name, false, absolute_names_option);
-      break;
-    }
-  
-  if (strip_name_components)
-    {
-      size_t prefix_len = stripped_prefix_len (file_name,
-					       strip_name_components);
-      if (prefix_len == (size_t) -1)
-	prefix_len = strlen (file_name);
-      file_name += prefix_len;
-    }
-  return file_name;
-}
-
-bool
-transform_member_name (char **pinput, int type)
-{
-  return transform_name_fp (pinput, type, decode_xform, &type);
 }
 
 #define ISOCTAL(c) ((c)>='0'&&(c)<='7')
@@ -555,7 +574,7 @@ decode_header (union block *header, struct tar_stat_info *stat_info,
   enum archive_format format;
   unsigned hbits; /* high bits of the file mode. */
   mode_t mode = MODE_FROM_HEADER (header->header.mode, &hbits);
-  
+
   if (strcmp (header->header.magic, TMAGIC) == 0)
     {
       if (header->star_header.prefix[130] == 0
@@ -569,7 +588,9 @@ decode_header (union block *header, struct tar_stat_info *stat_info,
       else
 	format = USTAR_FORMAT;
     }
-  else if (strcmp (header->header.magic, OLDGNU_MAGIC) == 0)
+  else if (strcmp (header->buffer + offsetof (struct posix_header, magic),
+		   OLDGNU_MAGIC)
+	   == 0)
     format = hbits ? OLDGNU_FORMAT : GNU_FORMAT;
   else
     format = V7_FORMAT;
@@ -652,18 +673,8 @@ decode_header (union block *header, struct tar_stat_info *stat_info,
           || stat_info->dumpdir)
 	stat_info->is_dumpdir = true;
     }
-
-  transform_member_name (&stat_info->file_name, XFORM_REGFILE);
-  switch (header->header.typeflag)
-    {
-    case SYMTYPE:
-      transform_member_name (&stat_info->link_name, XFORM_SYMLINK);
-      break;
-      
-    case LNKTYPE:
-      transform_member_name (&stat_info->link_name, XFORM_LINK);
-    }
 }
+
 
 /* Convert buffer at WHERE0 of size DIGS from external format to
    uintmax_t.  DIGS must be positive.  If TYPE is nonnull, the data
@@ -885,7 +896,7 @@ from_header (char const *where0, size_t digs, char const *type,
   return -1;
 }
 
-gid_t
+static gid_t
 gid_from_header (const char *p, size_t s)
 {
   return from_header (p, s, "gid_t",
@@ -894,7 +905,7 @@ gid_from_header (const char *p, size_t s)
 		      false, false);
 }
 
-major_t
+static major_t
 major_from_header (const char *p, size_t s)
 {
   return from_header (p, s, "major_t",
@@ -902,7 +913,7 @@ major_from_header (const char *p, size_t s)
 		      (uintmax_t) TYPE_MAXIMUM (major_t), false, false);
 }
 
-minor_t
+static minor_t
 minor_from_header (const char *p, size_t s)
 {
   return from_header (p, s, "minor_t",
@@ -912,7 +923,7 @@ minor_from_header (const char *p, size_t s)
 
 /* Convert P to the file mode, as understood by tar.
    Store unrecognized mode bits (from 10th up) in HBITS. */
-mode_t
+static mode_t
 mode_from_header (const char *p, size_t s, unsigned *hbits)
 {
   unsigned u = from_header (p, s, "mode_t",
@@ -943,14 +954,7 @@ off_from_header (const char *p, size_t s)
 		      (uintmax_t) TYPE_MAXIMUM (off_t), false, false);
 }
 
-size_t
-size_from_header (const char *p, size_t s)
-{
-  return from_header (p, s, "size_t", (uintmax_t) 0,
-		      (uintmax_t) TYPE_MAXIMUM (size_t), false, false);
-}
-
-time_t
+static time_t
 time_from_header (const char *p, size_t s)
 {
   return from_header (p, s, "time_t",
@@ -958,7 +962,7 @@ time_from_header (const char *p, size_t s)
 		      (uintmax_t) TYPE_MAXIMUM (time_t), false, false);
 }
 
-uid_t
+static uid_t
 uid_from_header (const char *p, size_t s)
 {
   return from_header (p, s, "uid_t",
@@ -1154,7 +1158,7 @@ simple_print_header (struct tar_stat_info *st, union block *blk,
 
       /* Time stamp.  */
 
-      time_stamp = tartime (st->mtime, false);
+      time_stamp = tartime (st->mtime, full_time_option);
       time_stamp_len = strlen (time_stamp);
       if (datewidth < time_stamp_len)
 	datewidth = time_stamp_len;
@@ -1300,8 +1304,8 @@ simple_print_header (struct tar_stat_info *st, union block *blk,
 }
 
 
-void
-print_volume_label ()
+static void
+print_volume_label (void)
 {
   struct tar_stat_info vstat;
   union block vblk;
@@ -1364,7 +1368,7 @@ skip_file (off_t size)
 {
   union block *x;
 
-  /* FIXME: Make sure mv_begin is always called before it */
+  /* FIXME: Make sure mv_begin_read is always called before it */
 
   if (seekable_archive)
     {
@@ -1399,7 +1403,7 @@ skip_member (void)
       char save_typeflag = current_header->header.typeflag;
       set_next_block_after (current_header);
 
-      mv_begin (&current_stat_info);
+      mv_begin_read (&current_stat_info);
 
       if (current_stat_info.is_sparse)
 	sparse_skip_file (&current_stat_info);
@@ -1420,22 +1424,23 @@ test_archive_label ()
   if (read_header (&current_header, &current_stat_info, read_header_auto)
       == HEADER_SUCCESS)
     {
-      char *s = NULL;
-	
       decode_header (current_header,
 		     &current_stat_info, &current_format, 0);
       if (current_header->header.typeflag == GNUTYPE_VOLHDR)
 	assign_string (&volume_label, current_header->header.name);
 
-      if (volume_label
-	  && (name_match (volume_label)
-	      || (multi_volume_option
-		  && (s = drop_volume_label_suffix (volume_label))
-		  && name_match (s))))
-	if (verbose_option)
-	  print_volume_label ();
-      free (s);
+      if (volume_label)
+	{
+	  if (verbose_option)
+	    print_volume_label ();
+	  if (!name_match (volume_label) && multi_volume_option)
+	    {
+	      char *s = drop_volume_label_suffix (volume_label);
+	      name_match (s);
+	      free (s);
+	    }
+	}
     }
   close_archive ();
-  names_notfound ();
+  label_notfound ();
 }

@@ -1,7 +1,7 @@
 /* -*- buffer-read-only: t -*- vi: set ro: */
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* A GNU-like <dirent.h>.
-   Copyright (C) 2006-2010 Free Software Foundation, Inc.
+   Copyright (C) 2006-2011 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
 #endif
+@PRAGMA_COLUMNS@
 
 /* The include_next requires a split double-inclusion guard.  */
 #@INCLUDE_NEXT@ @NEXT_DIRENT_H@
@@ -52,11 +53,28 @@ _GL_CXXALIAS_SYS (closedir, int, (DIR *));
 _GL_CXXALIASWARN (closedir);
 
 #if @GNULIB_DIRFD@
-# if !@HAVE_DECL_DIRFD@ && !defined dirfd
 /* Return the file descriptor associated with the given directory stream,
    or -1 if none exists.  */
-_GL_EXTERN_C int dirfd (DIR *dir) _GL_ARG_NONNULL ((1));
+# if @REPLACE_DIRFD@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef dirfd
+#   define dirfd rpl_dirfd
+#  endif
+_GL_FUNCDECL_RPL (dirfd, int, (DIR *) _GL_ARG_NONNULL ((1)));
+_GL_CXXALIAS_RPL (dirfd, int, (DIR *));
+# else
+#  if defined __cplusplus && defined GNULIB_NAMESPACE && defined dirfd
+    /* dirfd is defined as a macro and not as a function.
+       Turn it into a function and get rid of the macro.  */
+static inline int (dirfd) (DIR *dp) { return dirfd (dp); }
+#   undef dirfd
+#  endif
+#  if !(@HAVE_DECL_DIRFD@ || defined dirfd)
+_GL_FUNCDECL_SYS (dirfd, int, (DIR *) _GL_ARG_NONNULL ((1)));
+#  endif
+_GL_CXXALIAS_SYS (dirfd, int, (DIR *));
 # endif
+_GL_CXXALIASWARN (dirfd);
 #elif defined GNULIB_POSIXCHECK
 # undef dirfd
 # if HAVE_RAW_DECL_DIRFD
@@ -79,7 +97,7 @@ _GL_WARN_ON_USE (dirfd, "dirfd is unportable - "
 _GL_FUNCDECL_RPL (fdopendir, DIR *, (int fd));
 _GL_CXXALIAS_RPL (fdopendir, DIR *, (int fd));
 # else
-#  if !@HAVE_FDOPENDIR@
+#  if !@HAVE_FDOPENDIR@ || !@HAVE_DECL_FDOPENDIR@
 _GL_FUNCDECL_SYS (fdopendir, DIR *, (int fd));
 #  endif
 _GL_CXXALIAS_SYS (fdopendir, DIR *, (int fd));

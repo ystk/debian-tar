@@ -1,5 +1,5 @@
-# inttypes.m4 serial 17
-dnl Copyright (C) 2006-2010 Free Software Foundation, Inc.
+# inttypes.m4 serial 18
+dnl Copyright (C) 2006-2011 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -285,7 +285,7 @@ AC_DEFUN([gl_INTTYPES_MODULE_INDICATOR],
 [
   dnl Use AC_REQUIRE here, so that the default settings are expanded once only.
   AC_REQUIRE([gl_INTTYPES_H_DEFAULTS])
-  GNULIB_[]m4_translit([$1],[abcdefghijklmnopqrstuvwxyz./-],[ABCDEFGHIJKLMNOPQRSTUVWXYZ___])=1
+  gl_MODULE_INDICATOR_SET_VARIABLE([$1])
 ])
 
 AC_DEFUN([gl_INTTYPES_H_DEFAULTS],

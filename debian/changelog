@@ -1,3 +1,82 @@
+tar (1.26+dfsg-0.1) unstable; urgency=low
+
+  * non-maintainer upload
+  * remove unused and non-DFSG compliant doc/*.texi and doc/*.info* files from
+    source, closes: #695803
+
+ -- David Prévot <taffit@debian.org>  Mon, 31 Dec 2012 11:05:50 -0400
+
+tar (1.26-4) unstable; urgency=low
+
+  * mark "Mult-Arch: foreign" to ease crossgrading, closes: #649478
+  * hardened build flags patch from Moritz Huehlenhoff, closes: #653722
+
+ -- Bdale Garbee <bdale@gag.com>  Fri, 30 Dec 2011 09:18:11 -0700
+
+tar (1.26-3) unstable; urgency=low
+
+  * only run listed03.at on Linux systems synce upstream says it's known to
+    fail on BSD, apparently including our kfreebsd variants, closes: #639178
+
+ -- Bdale Garbee <bdale@gag.com>  Sat, 12 Nov 2011 11:49:38 -0700
+
+tar (1.26-2) unstable; urgency=low
+
+  * clean up various lintian warnings
+
+ -- Bdale Garbee <bdale@gag.com>  Wed, 17 Aug 2011 14:47:33 -0700
+
+tar (1.26-1) unstable; urgency=low
+
+  * new upstream version
+  * add a check to the rules file to ensure test suite is not attempted while
+    building as root, closes: #596268
+
+ -- Bdale Garbee <bdale@gag.com>  Wed, 17 Aug 2011 10:46:03 -0700
+
+tar (1.25-3) unstable; urgency=low
+
+  * cherry-pick some upstream commits that appear to address open bugs
+  * fix for --one-file-system and --listed-incremental together,
+    closes: #603371, #604394, #604698
+  * fix for FreeBSD symlink incompatibility with POSIX, closes: #602241
+
+ -- Bdale Garbee <bdale@gag.com>  Mon, 06 Dec 2010 20:35:55 -0700
+
+tar (1.25-2) unstable; urgency=low
+
+  * accept a "hack" from Joey Hess to work around an unfortunate side effect 
+    of removing the patch to src/create.c regarding links of 100 chars in
+    1.23-4 that broke pristine-tar in some cases.  The "fix" is to support 
+    the old behavior if the environment variable TAR_LONGLINK_100 is set, 
+    which pristine-tar knows about and will use when necessary but which 
+    should never be used by anyone else!  closes: #603231
+
+ -- Bdale Garbee <bdale@gag.com>  Fri, 12 Nov 2010 02:31:25 -0700
+
+tar (1.25-1) unstable; urgency=low
+
+  * new upstream version, closes: #602184, #602209, #602413, #575298
+  * Add Vcs-Git, Vcs-Browser fields to debian/control using patch from
+    Simon McVittie's 1.24-1.1 NMU, closes: #602639, #602709
+  * stop patching src/list.c since it now does more harm than good,
+    and add a Breaks against old dpkg versions, closes: #522858
+
+ -- Bdale Garbee <bdale@gag.com>  Wed, 10 Nov 2010 15:45:09 -0700
+
+tar (1.24-1) unstable; urgency=low
+
+  * new upstream version
+
+ -- Bdale Garbee <bdale@gag.com>  Mon, 01 Nov 2010 17:26:56 -0600
+
+tar (1.23-4) unstable; urgency=low
+
+  * revert patch to src/create.c introduced in 2004 to fix a dpkg bug long
+    since resolved, closes: #598345
+
+ -- Bdale Garbee <bdale@gag.com>  Wed, 29 Sep 2010 06:01:21 +0900
+
 tar (1.23-3) unstable; urgency=medium
 
   * add xz-utils back to the Suggests list since it may not be 'required'

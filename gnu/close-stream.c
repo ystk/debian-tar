@@ -2,7 +2,7 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Close a stream, with nicer error checking than fclose's.
 
-   Copyright (C) 1998-2002, 2004, 2006-2010 Free Software Foundation, Inc.
+   Copyright (C) 1998-2002, 2004, 2006-2011 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -57,9 +57,9 @@
 int
 close_stream (FILE *stream)
 {
-  bool some_pending = (__fpending (stream) != 0);
-  bool prev_fail = (ferror (stream) != 0);
-  bool fclose_fail = (fclose (stream) != 0);
+  const bool some_pending = (__fpending (stream) != 0);
+  const bool prev_fail = (ferror (stream) != 0);
+  const bool fclose_fail = (fclose (stream) != 0);
 
   /* Return an error indication if there was a previous failure or if
      fclose failed, with one exception: ignore an fclose failure if

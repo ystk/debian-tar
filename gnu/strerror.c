@@ -2,7 +2,7 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* strerror.c --- POSIX compatible system error routine
 
-   Copyright (C) 2007-2010 Free Software Foundation, Inc.
+   Copyright (C) 2007-2011 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@
 # endif
 
 # include "intprops.h"
+
+/* Use the system functions, not the gnulib overrides in this file.  */
+# undef sprintf
 
 # undef strerror
 # if ! HAVE_DECL_STRERROR
@@ -318,6 +321,12 @@ rpl_strerror (int n)
 # if GNULIB_defined_ESTALE
     case ESTALE:
       msg = "Stale NFS file handle";
+      break;
+# endif
+
+# if GNULIB_defined_EDQUOT
+    case EDQUOT:
+      msg = "Disk quota exceeded";
       break;
 # endif
 
