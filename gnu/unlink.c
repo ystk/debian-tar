@@ -2,7 +2,7 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Work around unlink bugs.
 
-   Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2009-2011 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#include "dosname.h"
 
 #undef unlink
 
@@ -82,6 +84,16 @@ rpl_unlink (char const *name)
         }
     }
   if (!result)
-    result = unlink (name);
+    {
+#if UNLINK_PARENT_BUG
+      if (len >= 2 && name[len - 1] == '.' && name[len - 2] == '.'
+          && (len == 2 || ISSLASH (name[len - 3])))
+        {
+          errno = EISDIR; /* could also use EPERM */
+          return -1;
+        }
+#endif
+      result = unlink (name);
+    }
   return result;
 }

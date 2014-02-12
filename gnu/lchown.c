@@ -2,7 +2,7 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Provide a stub lchown function for systems that lack it.
 
-   Copyright (C) 1998-1999, 2002, 2004, 2006-2007, 2009-2010 Free Software
+   Copyright (C) 1998-1999, 2002, 2004, 2006-2007, 2009-2011 Free Software
    Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -72,11 +72,12 @@ lchown (const char *file, uid_t uid, gid_t gid)
 int
 rpl_lchown (const char *file, uid_t uid, gid_t gid)
 {
-  struct stat st;
   bool stat_valid = false;
   int result;
 
 # if CHOWN_CHANGE_TIME_BUG
+  struct stat st;
+
   if (gid != (gid_t) -1 || uid != (uid_t) -1)
     {
       if (lstat (file, &st))
