@@ -1,3 +1,99 @@
+tar (1.27.1-2) unstable; urgency=low
+
+  * patch from David Gilman adds watch file with signature verification, 
+    closes: #742351
+  * patch from David Gilman fixes problem with multi-line descriptions,
+    closes: #593149
+
+ -- Bdale Garbee <bdale@gag.com>  Sat, 22 Mar 2014 15:55:03 -0600
+
+tar (1.27.1-1) unstable; urgency=low
+
+  * new upstream version
+
+ -- Bdale Garbee <bdale@gag.com>  Mon, 03 Feb 2014 18:05:53 -0700
+
+tar (1.27-4) unstable; urgency=low
+
+  * add ACL, XATTR, and SELinux support by augmenting build-deps so the
+    configure will find the right libraries, closes: #732071
+
+ -- Bdale Garbee <bdale@gag.com>  Sat, 14 Dec 2013 10:05:08 -0700
+
+tar (1.27-3) unstable; urgency=low
+
+  * patch from Joey Hess to allow tar to replicate 1.26 output on behalf
+    of pristine-tar, closes: #728025
+  * honor DEB_BUILD_OPTIONS parallel=<n>, honor dpkg-buildflags in build
+    target in addition to configure target, closes: #727196
+  * lower mime priority to 1 so interactive packages using the default
+    priority of 5 win, closes: #727303
+
+ -- Bdale Garbee <bdale@gag.com>  Sun, 03 Nov 2013 09:40:31 -0700
+
+tar (1.27-2) unstable; urgency=low
+
+  * claim support for mime type application/x-ustar too, and no longer
+    explicitly mention decompression, closes: #727159
+
+ -- Bdale Garbee <bdale@gag.com>  Tue, 22 Oct 2013 20:39:24 -0600
+
+tar (1.27-1) unstable; urgency=low
+
+  * new upstream version
+  * prefix backup and restore scripts with tar- to avoid conflicts with
+    other packages like openafs-client, closes: #724064, #724240
+  * move "libexec" content in tar-scripts to /usr/lib/tar, closes: #724238
+
+ -- Bdale Garbee <bdale@gag.com>  Tue, 15 Oct 2013 09:56:45 -0600
+
+tar (1.26+dfsg-10) unstable; urgency=low
+
+  * tar-scripts should be optional, not required
+
+ -- Bdale Garbee <bdale@gag.com>  Sun, 22 Sep 2013 01:09:42 -0600
+
+tar (1.26+dfsg-9) unstable; urgency=low
+
+  * add a tar-scripts package containing the --enable-backup-scripts content,
+    which conflicts with files in at least the dump package, closes: #293671
+
+ -- Bdale Garbee <bdale@gag.com>  Sat, 21 Sep 2013 09:44:48 -0600
+
+tar (1.26+dfsg-8) unstable; urgency=low
+
+  * cherry-pick upstream commit at Pino Toscano's suggestion to fix FTBFS
+    on hurd-i386, closes: #719863
+
+ -- Bdale Garbee <bdale@gag.com>  Fri, 16 Aug 2013 11:37:40 +0200
+
+tar (1.26+dfsg-7) unstable; urgency=low
+
+  * cherry-pick upstream commit at Marc Schaeffer's suggestion to fix
+    --compare failures, closes: #614085
+
+ -- Bdale Garbee <bdale@gag.com>  Thu, 15 Aug 2013 15:22:11 +0200
+
+tar (1.26+dfsg-6) unstable; urgency=low
+
+  * cherry-pick upstream commit at Paul Eggert's suggestion to address link
+    extraction issue, closes: #452365
+
+ -- Bdale Garbee <bdale@gag.com>  Fri, 31 May 2013 12:12:35 -0600
+
+tar (1.26+dfsg-5) unstable; urgency=low
+
+  [ Wookey ]
+  * Fix included gnulib so we don't get FTBFS with eglibc-2.16, 
+    closes: #693352, #701419
+
+  [ Bdale Garbee ]
+  * update mailcap entries to use %s, closes: #681302
+  * include the http://www.gnu.org/software/tar/utils/tarcat script for use 
+    with multi-volume archives, closes: #492036
+
+ -- Bdale Garbee <bdale@gag.com>  Mon, 01 Apr 2013 09:17:04 -0600
+
 tar (1.26+dfsg-0.1) unstable; urgency=low
 
   * non-maintainer upload
