@@ -1,3 +1,12 @@
+tar (1.27.1-2+deb8u1) jessie-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * CVE-2016-6321: Bypassing the extract path name.
+    When extracting, member names containing '..' components are skipped.
+    (Closes: #842339)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sun, 30 Oct 2016 07:48:55 +0100
+
 tar (1.27.1-2) unstable; urgency=low
 
   * patch from David Gilman adds watch file with signature verification, 
