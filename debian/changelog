@@ -1,3 +1,11 @@
+tar (1.27.1-2+deb8u2) jessie-security; urgency=high
+
+  * CVE-2018-20482: Fix a potential denial of service vulnerability where
+    --sparse can loop endlessly if the file shrinks whilst it is being read.
+    (Closes: #917377)
+
+ -- Chris Lamb <lamby@debian.org>  Mon, 31 Dec 2018 09:26:14 +0000
+
 tar (1.27.1-2+deb8u1) jessie-security; urgency=high
 
   * Non-maintainer upload by the Security Team.
